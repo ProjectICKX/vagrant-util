@@ -13,6 +13,8 @@
  # @varsion		1.0.0
 ###
 
+require 'yaml'
+
 #
 # Ickx Vagrant Utility
 #
@@ -27,6 +29,9 @@ class Ivu
 
 	# @return	[String]	vagrantのデフォルトパスワード
 	DEFAULT_PASSWORD	= 'vagrant'
+
+	# @return	[String]	デフォルトとして使用するvagrant api version
+	DEFAULT_API_VERSION	= "2"
 
 	# @return	[Array]	起動オプションパラメータ配列
 	@@params = nil
@@ -271,7 +276,7 @@ class Ivu
 			:SRC_DIR			=> "#{apps_dir}/src",
 			:BUILD_DIR			=> "#{build_dir}",
 			:CONFIG_DIR			=> "#{build_dir}/config",
-			:DOCS_DIR			=> "#{build_dir}/docs",
+			:DOC_DIR			=> "#{build_dir}/doc",
 			:MIDDLEWARE_DIR		=> "#{build_dir}/middlewear",
 			:PROVISION_DIR		=> "#{provision_dir}",
 			:MACHINE_NAME_DIR	=> "#{machine_name_dir}",
@@ -302,5 +307,44 @@ class Ivu
 		end
 
 		return env_list
+	end
+
+
+	#
+	# 現在のVagrant プロバイダ名を返します。
+	#
+	# @return	[String]	現在のVagrant プロバイダ名
+	#
+	def self.get_current_provider ()
+		if Vagrant.has_plugin?('vagrant-parallels') then
+			return 'parallels'
+		end
+
+		if Vagrant.has_plugin?('vagrant-aws') then
+			return 'aws'
+		end
+
+		if Vagrant.has_plugin?('vagrant-vmware-workstation') then
+			return 'vmware-workstation'
+		end
+
+		return 'virtualbox'
+	end
+
+	#
+	# 指定されたファイルをyamlとしてパースし、ハッシュとして返します。
+	#
+	# @param	[String]	yml_path	yamlファイルへの相対パス
+	#
+	# @return	[Hash]	yamlファイルの内容
+	#
+	def self.load_yaml (yaml_path)
+		begin
+			return YAML.load_file(File.join(File.dirname(__FILE__), yaml_path))
+		rescue Errno::ENOENT => ex
+			STDERR.puts 'yamlファイルの読み込みに失敗しました。'
+			STDERR.puts ex
+			exit(false)
+		end
 	end
 end
